@@ -1,14 +1,24 @@
 from bottle import Bottle,run,request,template
 import pcf_task
+import os
+
+def is_path(path):
+    if not path:
+        return False
+    elif not os.path.isdir(path):
+        return False
+    else:
+        return True
 
 app=Bottle()
 @app.route('/', method='GET')
 def home():
     return '''<form action="/start" method="post">
-                基金代码:<input name="codes" type="text" style="width:340px"/>(多基金用英文逗号分隔)<br><br>
-                下载路径:<input name="path" type="text" style="width:340px" value="S:/puf-etfms" /><br><br>
-                设置时间:<input name="hour" type="text" value="8" />时:<input name="minute" type="text" value="35" />分
-                <input value="启动定时任务" type="submit"/>
+            <span style="color:blue">----------------深圳证券交易所官网数据爬取----------------</span><br><br>
+            基金代码:<input name="codes" type="text" style="width:340px"/>(多基金用英文逗号分隔)<br><br>
+            下载路径:<input name="path" type="text" style="width:340px" value="S:/puf-etfms" /><br><br>
+            设置时间:<input name="hour" type="text" value="8" />时:<input name="minute" type="text" value="35" />分
+            <input value="启动定时任务" type="submit"/>
             </form>'''
 
 @app.route('/start', method='POST')
@@ -22,29 +32,32 @@ def start():
         minute = int(minute_str)
         if not codes:
             return template('''<form action="/start" method="post">
-                                   基金代码:<input name="codes" type="text" style="width:340px" />(多基金用英文逗号分隔)<span style="color:red">基金代码不能为空！</span><br><br>
-                                   下载路径:<input name="path" type="text" style="width:340px" value="S:/puf-etfms" /><br><br>
-                                   设置时间:<input name="hour" type="text" value="8"/>时:
-                                   <input name="minute" type="text" value="35" />分
-                                   <input value="启动定时任务" type="submit"/>
-                               </form>''')
-        elif not path:
+                            <span style="color:blue">----------------深圳证券交易所官网数据爬取----------------</span><br><br>
+                            基金代码:<input name="codes" type="text" style="width:340px" />(多基金用英文逗号分隔)<span style="color:red">基金代码为空！</span><br><br>
+                            下载路径:<input name="path" type="text" style="width:340px" value="S:/puf-etfms" /><br><br>
+                            设置时间:<input name="hour" type="text" value="8"/>时:
+                            <input name="minute" type="text" value="35" />分
+                            <input value="启动定时任务" type="submit"/>
+                            </form>''')
+        elif not is_path(path):
             return template('''<form action="/start" method="post">
-                                               基金代码:<input name="codes" type="text" style="width:340px" />(多基金用英文逗号分隔)<br><br>
-                                               下载路径:<input name="path" type="text" style="width:340px" value="S:/puf-etfms" /><span style="color:red">路径不能为空！</span><br><br>
-                                               设置时间:<input name="hour" type="text" value="8"/>时:
-                                               <input name="minute" type="text" value="35" />分
-                                               <input value="启动定时任务" type="submit"/>
-                                           </form>''')
+                            <span style="color:blue">----------------深圳证券交易所官网数据爬取----------------</span><br><br>
+                            基金代码:<input name="codes" type="text" style="width:340px" />(多基金用英文逗号分隔)<br><br>
+                            下载路径:<input name="path" type="text" style="width:340px" value="S:/puf-etfms" /><span style="color:red">路径为空或者不存在！</span><br><br>
+                            设置时间:<input name="hour" type="text" value="8"/>时:
+                            <input name="minute" type="text" value="35" />分
+                            <input value="启动定时任务" type="submit"/>
+                            </form>''')
         elif 0 > hour or hour >= 24 or 0 > minute or minute >= 60:
             return template('''<form action="/start" method="post">
-                                               基金代码:<input name="codes" type="text" style="width:340px" />(多基金用英文逗号分隔)<br><br>
-                                               下载路径:<input name="path" type="text" style="width:340px" value="S:/puf-etfms"/><br><br>
-                                               设置时间:<input name="hour" type="text" value="8"/>时:
-                                               <input name="minute" type="text" value="35" />分
-                                               <input value="启动定时任务" type="submit"/>
-                                               <span style="color:red">时间格式错误，请重新设置！</span>
-                                           </form>''')
+                            <span style="color:blue">----------------深圳证券交易所官网数据爬取----------------</span><br><br>
+                            基金代码:<input name="codes" type="text" style="width:340px" />(多基金用英文逗号分隔)<br><br>
+                            下载路径:<input name="path" type="text" style="width:340px" value="S:/puf-etfms"/><br><br>
+                            设置时间:<input name="hour" type="text" value="8"/>时:
+                            <input name="minute" type="text" value="35" />分
+                            <input value="启动定时任务" type="submit"/>
+                            <span style="color:red">时间格式错误，请重新设置！</span>
+                            </form>''')
         else:
             pcf_task.run_task(codes, path, hour, minute)
             return template(
@@ -54,11 +67,12 @@ def start():
     except Exception as e:
         print(repr(e))
         return template('''<form action="/start" method="post">
-                       基金代码:<input name="codes" type="text" style="width:340px" />(多基金用英文逗号分隔)<br><br>
-                       下载路径:<input name="path" type="text" style="width:340px" value="S:/puf-etfms"/><br><br>
-                       设置时间:<input name="hour" type="text" value="8"/>时:
-                       <input name="minute" type="text" value="35" />分
-                       <input value="启动定时任务" type="submit"/>
-                       <span style="color:red">配置异常！</span>
-                   </form>''')
+                        <span style="color:blue">----------------深圳证券交易所官网数据爬取----------------</span><br><br>
+                        基金代码:<input name="codes" type="text" style="width:340px" />(多基金用英文逗号分隔)<br><br>
+                        下载路径:<input name="path" type="text" style="width:340px" value="S:/puf-etfms"/><br><br>
+                        设置时间:<input name="hour" type="text" value="8"/>时:
+                        <input name="minute" type="text" value="35" />分
+                        <input value="启动定时任务" type="submit"/>
+                        <span style="color:red">配置异常！</span>
+                        </form>''')
 run(app, host='127.0.0.1', port='8020')
