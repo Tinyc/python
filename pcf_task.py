@@ -33,8 +33,25 @@ header = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36'
 }
 
+
+# 单例
+class Borg(object):
+    @classmethod
+    def get_scheduler(cls):
+        try:
+            cls_scheduler = cls.scheduler
+        except AttributeError as e:
+            cls.scheduler = BackgroundScheduler()
+            logger.exception(repr(e))
+            return cls.scheduler
+        else:
+            return cls_scheduler
+
+
 # 需用同步锁，防止两个线程同时创建文件夹
 mutex = threading.Lock()
+
+
 def mk_dir(file_path):
     date_path = ''
     mutex.acquire()
@@ -57,6 +74,7 @@ def mk_dir(file_path):
         logger.info('创建文件夹结束,开始解锁......')
         mutex.release()
     return date_path
+
 
 # 获取数据
 def write_html(url, path):
@@ -100,6 +118,7 @@ def job1(arr, file_path):
     finally:
         logger.info('深圳证券交易所下载定时任务结束')
 
+
 # 爬取深圳证券交易所的定时任务
 def job2(arr, file_path):
     try:
@@ -108,7 +127,8 @@ def job2(arr, file_path):
         date = time.strftime('%Y%m%d')
         for each in arr:
             if each:
-                etf_url = 'http://reportdocs.static.szse.cn/files/text/etf/ETF' + each + date + '.txt?random=' + str(random.random())
+                etf_url = 'http://reportdocs.static.szse.cn/files/text/etf/ETF' + each + date + '.txt?random=' + str(
+                    random.random())
                 path = date_path + '/ETF' + each + date + '.txt'
                 logger.info('爬取路径:[' + etf_url + '],生成路径:[' + path + ']')
                 try:
@@ -135,18 +155,34 @@ def job2(arr, file_path):
 
 
 def run_task(codes, path, hour, minute):
+    scheduler = Borg.get_scheduler()
+    logger.info(scheduler)
     try:
         file_path = path.replace('\\', '/').replace('\\', '/')
         arr = codes.split(',')
-        scheduler = BackgroundScheduler()
-        trigger = CronTrigger(day_of_week='0-6', hour=hour, minute=minute)
-        scheduler.add_job(func=job1, trigger=trigger, args=[arr, file_path])
-        scheduler.add_job(func=job2, trigger=trigger, args=[arr, file_path])
-        scheduler.start()
+        trigger = CronTrigger(day_of_week='0-6', hour=hour, minute=minute, second='0')
+
+        flag = False
+        if scheduler.get_job("task_one"):
+            scheduler.reschedule_job(job_id='task_one', trigger=trigger, args=[arr, file_path], misfire_grace_time=120)
+        else:
+            scheduler.add_job(func=job1, trigger=trigger, args=[arr, file_path], misfire_grace_time=120, id='task_one')
+            flag = True
+
+        if scheduler.get_job("task_two"):
+            scheduler.reschedule_job(job_id='task_two', trigger=trigger, args=[arr, file_path], misfire_grace_time=120)
+        else:
+            scheduler.add_job(func=job2, trigger=trigger, args=[arr, file_path], misfire_grace_time=120, id='task_two')
+            flag = True
+
+        if flag:
+            scheduler.start()
+
         logger.info('python定时任务启动成功，将在[%s]:[%s]执行。可访问 http://127.0.0.1:8020/ 进行修改时间' % (hour, minute))
         logger.info('爬取的基金代码为:[%s]' % arr)
         logger.info('保存路径为:[%s]' % path)
     except Exception as e:
         logger.exception(repr(e))
+        scheduler.shutdown()
     finally:
         return True
