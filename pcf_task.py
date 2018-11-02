@@ -163,7 +163,7 @@ def run_task(codes, path, hour, minute):
         trigger = CronTrigger(day_of_week='0-6', hour=hour, minute=minute, second='0')
 
         flag = False
-        if scheduler.get_job("task_one"):
+        if scheduler.get_job('task_one'):
             scheduler.reschedule_job(job_id='task_one', trigger=trigger, args=[arr, file_path], misfire_grace_time=120)
         else:
             scheduler.add_job(func=job1, trigger=trigger, args=[arr, file_path], misfire_grace_time=120, id='task_one')
