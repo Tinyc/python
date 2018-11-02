@@ -169,7 +169,7 @@ def run_task(codes, path, hour, minute):
             scheduler.add_job(func=job1, trigger=trigger, args=[arr, file_path], misfire_grace_time=120, id='task_one')
             flag = True
 
-        if scheduler.get_job("task_two"):
+        if scheduler.get_job('task_two'):
             scheduler.reschedule_job(job_id='task_two', trigger=trigger, args=[arr, file_path], misfire_grace_time=120)
         else:
             scheduler.add_job(func=job2, trigger=trigger, args=[arr, file_path], misfire_grace_time=120, id='task_two')
