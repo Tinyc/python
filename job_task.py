@@ -451,59 +451,6 @@ def job7(file_path, data):
         logger.info(u"平安大华下载(XML)定时任务结束")
 
 
-# 上交所下载
-def job1_task():
-    logger.info(u'进入上交所定时任务多线程')
-    threading.Thread(target=job1(fund_code1, data_dict1)).start()
-    threading.Thread(target=job1(fund_code2, data_dict2)).start()
-
-
-# 上交所下载
-def job2_task():
-    logger.info(u'进入上交所下载定时任务')
-    threading.Thread(target=job2(data_down)).start()
-
-
-# 上交所页面所下载
-def job3_task():
-    logger.info(u'进入上交所页面下载定时任务')
-    threading.Thread(target=job3(data_down1)).start()
-
-
-# 平安大华页面下载
-def job4_task():
-    logger.info(u'进入平安大华页面下载定时任务多线程')
-    threading.Thread(target=job4(data_down2)).start()
-
-
-# 平安大华下载
-def job5_task():
-    logger.info(u'进入平安大华下载定时任务')
-    threading.Thread(target=job5(data_down3)).start()
-
-
-# 平安大华页面下载(港股)
-def job6_task():
-    logger.info(u'进入平安大华页面下载定时任务多线程(港股)')
-    threading.Thread(target=job6(data_down4)).start()
-
-
-# 平安大华页面下载(XML)
-def job7_task():
-    logger.info(u'进入平安大华页面下载定时任务多线程(港股)')
-    threading.Thread(target=job7(data_down5)).start()
-
-
-# 时间配置
-# trigger_time = "11:22"
-# schedule.every().day.at(trigger_time).do(job1_task)
-# schedule.every().day.at(trigger_time).do(job2_task)
-# schedule.every().day.at(trigger_time).do(job3_task)
-# schedule.every().day.at(trigger_time).do(job4_task)
-# schedule.every().day.at(trigger_time).do(job5_task)
-# schedule.every().day.at(trigger_time).do(job6_task)
-# schedule.every().day.at(trigger_time).do(job7_task)
-
 def is_new_job1(scheduler, trigger, job_name, job_id, file_path, data, code, count_):
     if scheduler.get_job(job_id):
         scheduler.reschedule_job(job_id=job_id, trigger=trigger, args=[file_path, data, code], misfire_grace_time=120)
